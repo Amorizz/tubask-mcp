@@ -1,0 +1,331 @@
+{
+  "serverInfo": {
+    "name": "Tubask",
+    "version": "0.6.1",
+    "description": "YouTube MCP for Claude and Cursor \u2014 3 read-only tools with MCP resources and prompts. Search, summarize, quote from captions, and multi-video creator advice (advice.themes). Responses include next_steps[], ai.usage, and structured error_code recovery.",
+    "websiteUrl": "https://tubask.app",
+    "documentationUrl": "https://tubask.app/docs"
+  },
+  "authentication": [
+    "oauth2"
+  ],
+  "transport": {
+    "type": "streamable-http",
+    "url": "https://tubask.app/mcp"
+  },
+  "tools": [
+    {
+      "name": "youtube_query",
+      "title": "YouTube Query",
+      "description": "Query YouTube: search videos/channels/playlists, channel profiles, latest uploads, playlist items, video comments, topic research with stats, or multi-video creator advice. Returns JSON including intent, result items, optional advice{} for goal=advice, next_steps[], and quota_cost. Single-video summaries and verbatim caption lookup use summarize_video and get_transcript.",
+      "readOnlyHint": true,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Universal paste target: watch URL, youtu.be link, @handle, channel URL, playlist URL/ID, or plain search text. With intent=auto, Tubask picks the mode."
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "advice",
+              "latest",
+              "research",
+              "comments",
+              "playlist",
+              "info",
+              "search"
+            ],
+            "default": "auto",
+            "description": "Shortcut for common jobs: advice (creator themes), latest (uploads), research (topic + stats), comments, playlist, info (one video), search (lightweight). Prefer over intent when unsure."
+          },
+          "intent": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "latest_channel",
+              "research",
+              "search",
+              "video_info",
+              "channel_info",
+              "creator_insights",
+              "playlist_videos",
+              "video_comments"
+            ],
+            "default": "auto",
+            "description": "Explicit routing mode when goal is insufficient. Most callers use goal or ref alone."
+          },
+          "query": {
+            "type": "string",
+            "description": "Search keywords for goal=research or goal=search (e.g. 'MCP server tutorial')."
+          },
+          "channel_ref": {
+            "type": "string",
+            "description": "YouTube @handle or channel URL \u2014 for goal=advice, goal=latest, or channel_info."
+          },
+          "video_ref": {
+            "type": "string",
+            "description": "11-char video ID or watch URL \u2014 for goal=comments or goal=info."
+          },
+          "playlist_ref": {
+            "type": "string",
+            "description": "Playlist URL or PL... ID \u2014 for goal=playlist."
+          },
+          "max_results": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Cap on videos, comments, or search hits returned (1\u201350). goal=advice analyzes up to 8."
+          },
+          "page_token": {
+            "type": "string",
+            "description": "Opaque token from next_page_token in a prior response \u2014 next page of same query."
+          },
+          "exclude_shorts": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true, filters YouTube Shorts and uploads under ~3 min from latest/advice/research videos. Set false for Shorts-first or short-form research."
+          },
+          "include_stats": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true, enriches video search/research with views, duration, URL, and is_short. Adds a small YouTube API quota cost on top of search."
+          },
+          "result_type": {
+            "type": "string",
+            "enum": [
+              "video",
+              "channel",
+              "playlist"
+            ],
+            "default": "video",
+            "description": "Search target type for goal=search."
+          },
+          "order": {
+            "type": "string",
+            "enum": [
+              "relevance",
+              "date",
+              "rating",
+              "viewCount",
+              "title",
+              "videoCount"
+            ],
+            "default": "relevance",
+            "description": "Sort order for search/research. date = newest first; viewCount = most viewed; relevance = default keyword ranking."
+          },
+          "comment_order": {
+            "type": "string",
+            "enum": [
+              "relevance",
+              "time"
+            ],
+            "default": "relevance",
+            "description": "Comment sort: relevance (top/liked) or time (newest first)."
+          },
+          "include_replies": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include reply threads on comments (up to 5 per thread). false reduces payload size."
+          },
+          "channel_id": {
+            "type": "string",
+            "description": "Optional UC... channel ID to scope search/research to one channel."
+          },
+          "include_full_description": {
+            "type": "boolean",
+            "default": false,
+            "description": "Return full video/channel description instead of a 280-char excerpt."
+          },
+          "depth": {
+            "type": "string",
+            "enum": [
+              "brief",
+              "detailed"
+            ],
+            "default": "brief",
+            "description": "Detail for goal=advice and per-video analysis: brief \u2248 5 takeaways; detailed \u2248 12 takeaways and longer quotes."
+          },
+          "topic_filter": {
+            "type": "string",
+            "description": "For goal=advice: topic to find across a creator's catalog (e.g. 'pricing', 'kubernetes'). Searches the channel, not just recent titles."
+          },
+          "published_after": {
+            "type": "string",
+            "description": "ISO 8601 UTC datetime (2025-01-01T00:00:00Z) \u2014 limit research/search to newer uploads."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "summarize_video",
+      "title": "Summarize Video",
+      "description": "Summarize one YouTube video from captions and metadata. Returns JSON with summary, key_points[], chapters[], quotes[] (timestamped), coverage{} (transcript sampling), and next_steps[]. Requires captions (auto-generated counts). Multi-video creator synthesis uses youtube_query with goal=advice.",
+      "readOnlyHint": true,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "video_ref": {
+            "type": "string",
+            "description": "YouTube watch URL, youtu.be link, or 11-character video ID."
+          },
+          "depth": {
+            "type": "string",
+            "enum": [
+              "brief",
+              "detailed"
+            ],
+            "default": "brief",
+            "description": "brief = concise takeaways; detailed = longer outline, more quotes and chapter detail."
+          },
+          "include_timestamps": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include start/timestamp on quotes and optional transcript_segments[]."
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Preferred caption language codes (en, fr, \u2026). Falls back with language_fallback flagged."
+          }
+        },
+        "required": [
+          "video_ref"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_transcript",
+      "title": "Get Transcript",
+      "description": "Fetch YouTube captions for one video: full text, keyword search, time range, or paginated segments. Returns JSON with segments[] (display_timestamp, end_seconds), match_count when searching, language metadata, and next_steps[]. Structured overview of a video uses summarize_video.",
+      "readOnlyHint": true,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "video_ref": {
+            "type": "string",
+            "description": "YouTube watch URL, youtu.be link, or 11-character video ID."
+          },
+          "search_in_transcript": {
+            "type": "string",
+            "description": "Case-insensitive keyword \u2014 returns only matching segments and match_count."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "plain",
+              "timestamped"
+            ],
+            "default": "plain",
+            "description": "plain = joined text; timestamped = segments[] with display_timestamp for citations."
+          },
+          "offset": {
+            "type": "integer",
+            "default": 0,
+            "minimum": 0,
+            "description": "Skip N segments after filters (pagination). Use next_offset from prior response."
+          },
+          "limit": {
+            "type": "integer",
+            "default": 200,
+            "minimum": 1,
+            "maximum": 500,
+            "description": "Max caption segments per page (hard cap 500)."
+          },
+          "start_seconds": {
+            "type": "number",
+            "description": "Only segments overlapping this start time (seconds). Includes boundary overlap."
+          },
+          "end_seconds": {
+            "type": "number",
+            "description": "Only segments overlapping this end time (seconds)."
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Preferred caption language codes. Response includes language and language_fallback."
+          }
+        },
+        "required": [
+          "video_ref"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "youtube://guide/tool-routing",
+      "name": "Tool routing guide",
+      "description": "Goal \u2192 tool mapping and disambiguation for the 3-tool surface.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "youtube://guide/response-fields",
+      "name": "Response field reference",
+      "description": "advice{}, coverage{}, pagination, and ai.usage fields explained.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "youtube://guide/error-recovery",
+      "name": "Error recovery guide",
+      "description": "error_code values and next_steps for trial, quota, and caption failures.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "youtube://guide/persona-workflows",
+      "name": "Persona workflows",
+      "description": "Researcher, journalist, creator, marketer, and developer call patterns.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "youtube://guide/upgrade-paths",
+      "name": "Upgrade paths",
+      "description": "Plans, when to mention Pro/Plus, objection handlers, billing URLs.",
+      "mimeType": "text/markdown"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "handle_any_link",
+      "description": "Route a pasted YouTube URL, @handle, playlist, or search text."
+    },
+    {
+      "name": "creator_advice",
+      "description": "Themed advice synthesized from a creator's videos (advice.themes)."
+    },
+    {
+      "name": "latest_channel_video",
+      "description": "Recent long-form uploads from a channel."
+    },
+    {
+      "name": "research_topic",
+      "description": "Topic research with view counts and durations."
+    },
+    {
+      "name": "summarize_video_prompt",
+      "description": "Structured summary with chapters, quotes, and coverage."
+    },
+    {
+      "name": "quote_for_article",
+      "description": "Exact caption quote with timestamp for journalism."
+    },
+    {
+      "name": "triage_talk",
+      "description": "Decide if a long video is worth watching (brief summary + coverage)."
+    },
+    {
+      "name": "competitor_pulse",
+      "description": "Channel profile and recent upload themes for marketers."
+    }
+  ]
+}

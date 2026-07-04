@@ -1,0 +1,39 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["Amorizz"],
+  "name": "@tubask/mcp",
+  "description": "Hosted YouTube MCP for Claude, Cursor, and ChatGPT — search, summarize, and quote videos with 3 tools and OAuth. Production endpoint: https://tubask.app/mcp",
+  "version": "0.6.1",
+  "license": "MIT",
+  "repository": "https://github.com/Amorizz/tubask-mcp",
+  "homepage": "https://tubask.app",
+  "author": {
+    "name": "Tubask",
+    "url": "https://tubask.app"
+  },
+  "tools": [
+    {
+      "name": "youtube_query",
+      "description": "Search YouTube, channels, playlists, comments, and multi-video creator advice."
+    },
+    {
+      "name": "summarize_video",
+      "description": "One-call video summary with key points, chapters, and timestamped quotes."
+    },
+    {
+      "name": "get_transcript",
+      "description": "Fetch captions with keyword search, timestamps, and time slices."
+    }
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "youtube",
+    "claude",
+    "cursor",
+    "oauth",
+    "transcript",
+    "summarize"
+  ]
+}

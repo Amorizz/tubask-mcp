@@ -1,0 +1,13 @@
+# Never publish
+.env
+.env.*
+*.pem
+*.key
+secrets/
+docs/
+publish.sh
+scripts/
+
+# OS
+.DS_Store
+.tmp-cli-test/

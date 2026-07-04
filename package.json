@@ -1,0 +1,56 @@
+{
+  "name": "@tubask/mcp",
+  "version": "0.6.4",
+  "type": "module",
+  "description": "Setup CLI for Tubask — hosted YouTube MCP for Claude, Cursor, and ChatGPT. Search, summarize, and quote videos in chat with 3 tools.",
+  "bin": {
+    "mcp": "bin/tubask-mcp.mjs",
+    "tubask-mcp": "bin/tubask-mcp.mjs",
+    "tubask-mcp-catalog": "catalog/stdio.mjs"
+  },
+  "files": [
+    "bin",
+    "catalog",
+    "lib",
+    "skills",
+    "server-card.json",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "start": "node catalog/stdio.mjs",
+    "init": "node bin/tubask-mcp.mjs init",
+    "setup": "node bin/tubask-mcp.mjs",
+    "skill:install": "node bin/tubask-mcp.mjs skill install"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "picocolors": "^1.1.1"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "youtube",
+    "claude",
+    "cursor",
+    "oauth",
+    "tubask"
+  ],
+  "homepage": "https://tubask.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amorizz/tubask-mcp.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "mcp": {
+    "transport": "http",
+    "url": "https://tubask.app/mcp",
+    "authentication": ["oauth2"]
+  }
+}
